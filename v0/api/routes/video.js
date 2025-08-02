@@ -1,1 +1,1 @@
-// Routes for /video/* endpoints
+// Placeholder for /video routes

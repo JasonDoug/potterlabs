@@ -1,0 +1,1 @@
+// Maps style to provider based on config

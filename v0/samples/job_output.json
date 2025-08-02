@@ -1,0 +1,8 @@
+{
+  "vid": "mock_vid_123456789",
+  "script": "Today we explore Ancient Egypt...",
+  "voice_file": "voice_mock_123456789.mp3",
+  "video_file": "video_mock_123456789.mp4",
+  "status": "complete",
+  "url": "https://mockcdn.ai/videos/mock_vid_123456789.mp4"
+}

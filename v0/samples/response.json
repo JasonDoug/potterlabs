@@ -1,0 +1,5 @@
+{
+  "vid": "mock_vid_123456789",
+  "status": "processing",
+  "message": "Video generation job created."
+}

@@ -1,0 +1,13 @@
+{
+  "topic": "Custom",
+  "prompt": "A robot teaches the history of ancient Egypt",
+  "style": "cinematic",
+  "voice": "Charlie",
+  "theme": "Hormozi_1",
+  "aspect_ratio": "16:9",
+  "duration": "60-90",
+  "include_voiceover": "1",
+  "bg_music": "default",
+  "use_ai": "1",
+  "language": "English"
+}

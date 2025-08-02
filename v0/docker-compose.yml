@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./shared:/app/shared
+    depends_on:
+      - ai-logic
+
+  ai-logic:
+    build: ./ai-logic
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./shared:/app/shared
+
+  swagger:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8080:8080"
+    environment:
+      SWAGGER_JSON: /spec/openapi.yaml
+    volumes:
+      - ./shared/openapi-ai-video-spec.yaml:/spec/openapi.yaml
