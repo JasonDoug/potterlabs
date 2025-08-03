@@ -1,0 +1,20 @@
+{
+  "name": "ai-video-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for creating AI video configurations",
+  "type": "module",
+  "main": "create-ai-video.mjs",
+  "bin": {
+    "create-ai-video": "./create-ai-video.mjs"
+  },
+  "scripts": {
+    "start": "node create-ai-video.mjs",
+    "test": "node create-ai-video.mjs"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0"
+  },
+  "keywords": ["ai", "video", "cli", "potter-labs"],
+  "author": "Potter Labs",
+  "license": "MIT"
+}

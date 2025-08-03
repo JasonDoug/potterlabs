@@ -13,7 +13,7 @@ router.use(validateApiKey);
 // Generate video endpoint
 router.post('/generate', async (req, res) => {
   try {
-    const { topic, prompt, style, mode = 'slideshow' } = req.body;
+    const { topic, prompt, style, duration, theme, voice } = req.body;
     
     if (!topic && !prompt) {
       return res.status(400).json({ error: 'Either topic or prompt is required' });
@@ -23,23 +23,37 @@ router.post('/generate', async (req, res) => {
       return res.status(400).json({ error: 'Style is required' });
     }
     
-    logger.info('Video generation request:', { topic, prompt, style, mode });
+    logger.info('Video generation request:', { topic, prompt, style, duration, theme, voice });
+    
+    // Use the routing system to determine provider
+    const { routeConfig } = await import('../services/configRouter.js');
+    const routing = routeConfig(style, { 
+      topic, 
+      duration, 
+      contentType: theme 
+    });
+    
+    logger.info('Routing decision:', routing);
     
     // Generate a job ID for tracking
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // For now, return a mock response
+    // Enhanced response with routing information
     const response = {
       jobId,
       status: 'processing',
       message: 'Video generation started',
-      estimatedTime: '2-5 minutes',
-      pollUrl: `/video/url?id=${jobId}`
+      estimatedTime: routing.provider === 'pika' ? '1-3 minutes' : 
+                    routing.provider === 'runway' ? '3-8 minutes' : '30-60 seconds',
+      pollUrl: `/video/url?id=${jobId}`,
+      provider: routing.provider,
+      mode: routing.mode,
+      reason: routing.reason
     };
     
     res.status(202).json(response);
     
-    // TODO: Implement actual video generation pipeline
+    // TODO: Implement actual video generation pipeline with routing.provider
     
   } catch (error) {
     logger.error('Video generation error:', error);
@@ -47,7 +61,6 @@ router.post('/generate', async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 // Get video status and URL
 router.get('/url', (req, res) => {
   const { id } = req.query;
@@ -136,24 +149,3 @@ router.get('/background-music', (req, res) => {
 });
 
 export default router;
-=======
-router.get('/topics', (_req, res) => res.json(topics));
-router.get('/themes', (_req, res) => res.json(themes));
-router.get('/voices', (_req, res) => res.json(voices));
-router.get('/styles', (_req, res) => res.json(styles));
-router.get('/background-music', (_req, res) => res.json(music));
-
-router.get('/url', (req, res) => {
-  const { id } = req.query;
-  const outPath = path.resolve('..', 'samples', 'job_output.json');
-  if (id && fs.existsSync(outPath)) {
-    const data = JSON.parse(fs.readFileSync(outPath, 'utf-8'));
-    if (data.vid === id) {
-      return res.json(data);
-    }
-  }
-  return res.json({ vid: id, status: 'processing' });
-});
-
-export default router;
->>>>>>> 1ca80e3a4ede10289b69842418ff5cbe94f4738a

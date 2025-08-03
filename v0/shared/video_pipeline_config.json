@@ -1,1 +1,88 @@
-{}
+{
+  "providers": {
+    "runway": {
+      "name": "Runway ML",
+      "strengths": ["cinematic", "photorealistic", "complex_scenes"],
+      "specialties": ["camera_movements", "long_duration", "narrative_flow"]
+    },
+    "pika": {
+      "name": "Pika Labs",
+      "strengths": ["animation", "creative_effects", "stylized"],
+      "specialties": ["artistic_styles", "fast_generation", "experimental"]
+    },
+    "slideshow": {
+      "name": "Static Slideshow",
+      "strengths": ["educational", "presentation", "cost_effective"],
+      "specialties": ["still_images", "voice_over", "captions"]
+    }
+  },
+  "style_routing": {
+    "photorealistic": {
+      "provider": "runway",
+      "reason": "Runway excels at realistic, cinematic content"
+    },
+    "cinematic": {
+      "provider": "runway", 
+      "reason": "Runway's strength in camera work and narrative flow"
+    },
+    "animation": {
+      "provider": "pika",
+      "reason": "Pika specializes in animated and stylized content"
+    },
+    "artistic": {
+      "provider": "pika",
+      "reason": "Pika handles creative and experimental styles better"
+    },
+    "abstract": {
+      "provider": "pika",
+      "reason": "Pika excels at non-realistic, creative content"
+    },
+    "documentary": {
+      "provider": "runway",
+      "reason": "Runway better for serious, realistic documentary style"
+    },
+    "slideshow_modern": {
+      "provider": "slideshow",
+      "reason": "Static images with modern styling"
+    },
+    "slideshow_classic": {
+      "provider": "slideshow", 
+      "reason": "Traditional presentation format"
+    }
+  },
+  "content_type_routing": {
+    "educational": {
+      "prefer": "slideshow",
+      "fallback": "runway"
+    },
+    "entertainment": {
+      "prefer": "pika",
+      "fallback": "runway"
+    },
+    "corporate": {
+      "prefer": "runway",
+      "fallback": "slideshow"
+    },
+    "creative": {
+      "prefer": "pika",
+      "fallback": "runway"
+    }
+  },
+  "duration_routing": {
+    "short": {
+      "max_seconds": 30,
+      "prefer": "pika",
+      "reason": "Pika faster for short clips"
+    },
+    "medium": {
+      "max_seconds": 120,
+      "prefer": "runway",
+      "reason": "Runway better for medium-length content"
+    },
+    "long": {
+      "max_seconds": 300,
+      "prefer": "slideshow",
+      "reason": "Slideshow more cost-effective for long content"
+    }
+  }
+}

@@ -2,14 +2,12 @@ import fs from 'fs';
 import path from 'path';
 
 import { generateScript } from './scriptGenerator.js';
-import { synthesizeVoice } from './voiceGenerator.js';
-import { routeConfig } from './configRouter.js';
+import { generateVoice } from './voiceGenerator.js';
 
 export async function generateVideo(config) {
   const vid = `mock_vid_${Date.now()}`;
   const script = await generateScript(config.prompt || config.topic);
-  const voice_file = await synthesizeVoice(script, config.voice);
-  const mode = routeConfig(config.style);
+  const voice_file = await generateVoice(script, config.voice);
 
   const output = {
     vid,
@@ -17,8 +15,7 @@ export async function generateVideo(config) {
     voice_file,
     video_file: `${vid}_video.mp4`,
     status: 'complete',
-    url: `https://mockcdn.ai/videos/${vid}.mp4`,
-    mode,
+    url: `https://mockcdn.ai/videos/${vid}.mp4`
   };
 
   const outPath = path.resolve('..', 'samples', 'job_output.json');

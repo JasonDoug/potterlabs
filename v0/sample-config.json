@@ -1,0 +1,12 @@
+{
+  "topic": "science",
+  "prompt": "Explain quantum physics in simple terms",
+  "style": "cinematic",
+  "voice": "sarah",
+  "theme": "modern",
+  "duration": 60,
+  "aspect_ratio": "16:9",
+  "include_voiceover": true,
+  "bg_music": "default",
+  "language": "English"
+}

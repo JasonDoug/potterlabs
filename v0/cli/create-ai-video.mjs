@@ -10,28 +10,37 @@ async function main() {
   const style = await select({
     message: 'Choose a visual style:',
     options: [
-      { label: 'Cinematic', value: 'cinematic' },
-      { label: 'Anime / Cartoon', value: 'anime' },
-      { label: 'Photographic', value: 'photographic' },
-      { label: 'Pixel Art', value: 'pixel art' },
-      { label: 'Watercolor / Line Art', value: 'watercolor' },
-      { label: 'Stylized / Neon / Punk', value: 'neon punk' },
-      { label: 'Slideshow (Fallback)', value: 'slideshow' },
+      { label: 'Cinematic (Runway)', value: 'cinematic' },
+      { label: 'Photorealistic (Runway)', value: 'photorealistic' },
+      { label: 'Animation (Pika)', value: 'animation' },
+      { label: 'Artistic (Pika)', value: 'artistic' },
+      { label: 'Abstract (Pika)', value: 'abstract' },
+      { label: 'Documentary (Runway)', value: 'documentary' },
+      { label: 'Modern Slideshow', value: 'slideshow_modern' },
+      { label: 'Classic Slideshow', value: 'slideshow_classic' },
     ],
   });
 
   const voice = await select({
     message: 'Choose a voice:',
     options: [
-      'Charlie', 'George', 'Callum', 'Sarah', 'Laura', 'Charlotte'
-    ].map(v => ({ label: v, value: v }))
+      { label: 'Sarah (American Female)', value: 'sarah' },
+      { label: 'Mike (American Male)', value: 'mike' },
+      { label: 'Emma (British Female)', value: 'emma' },
+      { label: 'James (British Male)', value: 'james' },
+      { label: 'Maria (Spanish Female)', value: 'maria' }
+    ]
   });
 
   const theme = await select({
     message: 'Choose a caption theme:',
     options: [
-      'Hormozi_1', 'Beast', 'Tracy', 'Noah', 'Karl', 'Luke'
-    ].map(v => ({ label: v, value: v }))
+      { label: 'Modern', value: 'modern' },
+      { label: 'Classic', value: 'classic' },
+      { label: 'Bold', value: 'bold' },
+      { label: 'Minimal', value: 'minimal' },
+      { label: 'Cinematic', value: 'cinematic' }
+    ]
   });
 
   const aspectRatio = await select({
@@ -41,7 +50,13 @@ async function main() {
 
   const duration = await select({
     message: 'Select video duration:',
-    options: ['30-60', '60-90', '90-120', '5 min', '10 min'].map(v => ({ label: v, value: v }))
+    options: [
+      { label: '15 seconds (Pika optimized)', value: 15 },
+      { label: '30 seconds (Short)', value: 30 },
+      { label: '60 seconds (Medium)', value: 60 },
+      { label: '120 seconds (Long)', value: 120 },
+      { label: '300 seconds (Extended)', value: 300 }
+    ]
   });
 
   const prompt = await text({
@@ -57,16 +72,29 @@ async function main() {
     message: 'Include background music?'
   });
 
+  // Add topic selection for better routing
+  const topic = await select({
+    message: 'Choose a content category:',
+    options: [
+      { label: 'History', value: 'history' },
+      { label: 'Science', value: 'science' },
+      { label: 'Technology', value: 'technology' },
+      { label: 'Nature', value: 'nature' },
+      { label: 'Space', value: 'space' },
+      { label: 'Custom', value: 'custom' }
+    ]
+  });
+
   const config = {
+    topic,
+    prompt: prompt || undefined,
     style,
     voice,
     theme,
-    aspect_ratio: aspectRatio,
     duration,
-    prompt: prompt || undefined,
-    include_voiceover: includeVoiceover ? "1" : "0",
+    aspect_ratio: aspectRatio,
+    include_voiceover: includeVoiceover,
     bg_music: includeMusic ? "default" : undefined,
-    use_ai: "1",
     language: "English"
   };
 
