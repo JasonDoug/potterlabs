@@ -47,6 +47,7 @@ router.post('/generate', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 // Get video status and URL
 router.get('/url', (req, res) => {
   const { id } = req.query;
@@ -135,3 +136,24 @@ router.get('/background-music', (req, res) => {
 });
 
 export default router;
+=======
+router.get('/topics', (_req, res) => res.json(topics));
+router.get('/themes', (_req, res) => res.json(themes));
+router.get('/voices', (_req, res) => res.json(voices));
+router.get('/styles', (_req, res) => res.json(styles));
+router.get('/background-music', (_req, res) => res.json(music));
+
+router.get('/url', (req, res) => {
+  const { id } = req.query;
+  const outPath = path.resolve('..', 'samples', 'job_output.json');
+  if (id && fs.existsSync(outPath)) {
+    const data = JSON.parse(fs.readFileSync(outPath, 'utf-8'));
+    if (data.vid === id) {
+      return res.json(data);
+    }
+  }
+  return res.json({ vid: id, status: 'processing' });
+});
+
+export default router;
+>>>>>>> 1ca80e3a4ede10289b69842418ff5cbe94f4738a
