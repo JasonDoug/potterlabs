@@ -2,6 +2,7 @@ import { logger } from '../utils/logger.js';
 import { generateScript } from './scriptGenerator.js';
 import { generateVoice } from './voiceGenerator.js';
 import { routeConfig } from './configRouter.js';
+import { generateImagesForSlideshow } from './imageService.js';
 
 // Provider-specific generation logic
 export const generateWithProvider = async (config, routing) => {
@@ -102,21 +103,34 @@ const generateWithSlideshow = async (config, routing) => {
     audioData = await generateVoice(script.scenes.map(s => s.text).join(' '), config.voice);
   }
   
-  // Generate images for each scene
-  const images = script.scenes.map((scene, index) => ({
-    sceneId: scene.id,
-    imageUrl: `https://slideshow.example.com/images/${Date.now()}_${index}.jpg`,
-    prompt: scene.imagePrompt,
-    duration: scene.duration
-  }));
+  // Generate images using the image service
+  let imageData = null;
+  try {
+    imageData = await generateImagesForSlideshow(script, config.style);
+    logger.info(`Generated ${imageData.images.length} images with ${imageData.provider}`);
+  } catch (error) {
+    logger.warn('Image generation failed, using placeholder images:', error.message);
+    // Fallback to placeholder images
+    imageData = {
+      images: script.scenes.map((scene, index) => ({
+        id: `placeholder_${index}`,
+        url: `https://slideshow.example.com/images/placeholder_${Date.now()}_${index}.jpg`,
+        prompt: scene.imagePrompt,
+        duration: scene.duration || 3,
+        provider: 'placeholder'
+      })),
+      provider: 'placeholder',
+      quality: 'standard'
+    };
+  }
   
-  // Mock slideshow generation (fastest)
+  // Mock slideshow assembly (image sequencing + audio sync)
   await simulateProviderDelay(500, 1500); // 0.5-1.5 seconds for demo
   
   const result = {
     type: 'slideshow',
     videoUrl: `https://slideshow.example.com/videos/${Date.now()}.mp4`,
-    thumbnailUrl: images[0]?.imageUrl,
+    thumbnailUrl: imageData.images[0]?.url,
     duration: config.duration || script.totalDuration,
     format: 'mp4',
     resolution: config.aspect_ratio === '9:16' ? '1080x1920' : 
@@ -124,14 +138,21 @@ const generateWithSlideshow = async (config, routing) => {
     provider: 'slideshow',
     script,
     audio: audioData,
-    images,
+    images: imageData.images,
+    imageGeneration: {
+      provider: imageData.provider,
+      quality: imageData.quality,
+      totalImages: imageData.images.length,
+      style: imageData.style
+    },
     style: config.style,
     quality: 'standard'
   };
   
   logger.info('Slideshow generation completed', { 
     duration: result.duration, 
-    scenes: images.length 
+    scenes: imageData.images.length,
+    imageProvider: imageData.provider
   });
   return result;
 };
@@ -181,7 +202,7 @@ export const getProviderCapabilities = (provider) => {
       maxDuration: 600, // 10 minutes
       supportedFormats: ['mp4'],
       supportedResolutions: ['1920x1080', '1080x1920', '1080x1080'],
-      features: ['cost_effective', 'educational', 'voice_sync']
+      features: ['cost_effective', 'educational', 'voice_sync', 'image_generation']
     }
   };
   

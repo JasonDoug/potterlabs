@@ -16,7 +16,8 @@ const PROVIDER_CONFIG = {
   slideshow: {
     enabled: true, // Always available
     strengths: ['educational', 'presentation', 'cost_effective'],
-    fallbacks: []
+    fallbacks: [],
+    imageGeneration: true
   }
 };
 
@@ -190,7 +191,7 @@ const getProviderSpecs = (provider) => {
       estimatedTime: '30-60 seconds',
       quality: 'standard',
       resolutions: ['1920x1080', '1080x1920', '1080x1080'],
-      features: ['cost_effective', 'educational', 'voice_sync', 'fast_generation']
+      features: ['cost_effective', 'educational', 'voice_sync', 'fast_generation', 'image_generation']
     }
   };
   
