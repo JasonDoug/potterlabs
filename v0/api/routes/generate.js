@@ -2,6 +2,7 @@ import express from 'express';
 import { validateApiKey } from '../utils/auth.js';
 import { validateConfig } from '../services/configService.js';
 import { routeConfig } from '../services/configRouter.js';
+import { dynamicRouteConfig, getAvailableProviders } from '../services/dynamicRouter.js';
 import { createJob } from '../services/jobService.js';
 import { generateWithProvider } from '../services/providerService.js';
 import { logger } from '../utils/logger.js';
@@ -27,12 +28,23 @@ router.post('/', async (req, res) => {
     
     logger.info('Video generation request:', config);
     
-    // Determine provider routing
-    const routing = routeConfig(config.style, { 
-      topic: config.topic, 
-      duration: config.duration, 
-      contentType: config.theme 
-    });
+    // Determine provider routing (use dynamic routing if available)
+    let routing;
+    try {
+      routing = await dynamicRouteConfig(config.style, { 
+        topic: config.topic, 
+        duration: config.duration, 
+        contentType: config.theme 
+      });
+    } catch (error) {
+      // Fallback to static routing if dynamic fails
+      logger.warn('Dynamic routing failed, using static routing:', error.message);
+      routing = routeConfig(config.style, { 
+        topic: config.topic, 
+        duration: config.duration, 
+        contentType: config.theme 
+      });
+    }
     
     logger.info('Routing decision:', routing);
     

@@ -7,6 +7,7 @@ import {
   getStyles, 
   getBackgroundMusic 
 } from '../services/configService.js';
+import { getAvailableProviders, getProviderCapabilities } from '../services/dynamicRouter.js';
 
 const router = express.Router();
 
@@ -41,6 +42,22 @@ router.get('/styles', (req, res) => {
 router.get('/background-music', (req, res) => {
   const music = getBackgroundMusic();
   res.json({ music });
+});
+
+// Get available providers and their capabilities
+router.get('/providers', async (req, res) => {
+  try {
+    const availableProviders = await getAvailableProviders();
+    const capabilities = await getProviderCapabilities();
+    
+    res.json({ 
+      available: availableProviders,
+      capabilities,
+      adaptive_routing: true
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to check provider availability' });
+  }
 });
 
 export default router;
