@@ -1,1 +1,3 @@
-// Maps style to provider based on config
+export function routeConfig(style = '') {
+  return style === 'slideshow' ? 'slideshow' : 'ai_generated';
+}
