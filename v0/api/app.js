@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import videoRoutes from './routes/video.js';
+import videoRoutes from './routes/index.js';
 import { logger } from './utils/logger.js';
 
 dotenv.config();

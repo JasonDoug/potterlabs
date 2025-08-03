@@ -1,4 +1,4 @@
-# AI Story API Reference (Updated)
+# AI Story API Reference
 
 This documentation covers the complete AI Story API for generating narrated AI videos with intelligent provider routing.
 
@@ -38,7 +38,7 @@ Returns the API status.
 
 **POST** `/video/generate`
 
-Creates a new AI video generation job with intelligent provider routing. Jobs are processed asynchronously.
+Creates a new AI video generation job with intelligent provider routing.
 
 **Request Body:**
 ```json
@@ -80,21 +80,10 @@ Creates a new AI video generation job with intelligent provider routing. Jobs ar
   "status": "processing",
   "message": "Video generation started",
   "estimatedTime": "3-8 minutes",
-  "pollUrl": "/video/status/job_1754217099267_d3hjgjrc2",
+  "pollUrl": "/video/url?id=job_1754217099267_d3hjgjrc2",
   "provider": "runway",
   "mode": "ai_generated",
   "reason": "Runway's strength in camera work and narrative flow"
-}
-```
-
-**Validation Errors:**
-```json
-{
-  "error": "Invalid configuration",
-  "details": [
-    "Either topic or prompt is required",
-    "Style is required"
-  ]
 }
 ```
 
@@ -108,104 +97,26 @@ Creates a new AI video generation job with intelligent provider routing. Jobs ar
 
 ### Get Video Status
 
-**GET** `/video/status/{jobId}`
+**GET** `/video/url`
 
-Retrieves the current status and details of a video generation job.
+Retrieves the status and download URL of a video generation job.
 
-**Path Parameters:**
-- `jobId` (required) - Job ID returned from `/video/generate`
+**Query Parameters:**
+- `id` (required) - Job ID returned from `/video/generate`
 
 **Example:**
 ```
-GET /video/status/job_1754217099267_d3hjgjrc2
+GET /video/url?id=job_1754217099267_d3hjgjrc2
 ```
 
-**Response (Processing):**
-```json
-{
-  "jobId": "job_1754217099267_d3hjgjrc2",
-  "status": "processing",
-  "progress": 45,
-  "estimatedTime": "3-8 minutes",
-  "createdAt": "2025-08-03T10:30:00.000Z"
-}
-```
-
-**Response (Completed - Runway):**
+**Response:**
 ```json
 {
   "jobId": "job_1754217099267_d3hjgjrc2",
   "status": "completed",
-  "progress": 100,
-  "type": "runway_video",
-  "videoUrl": "https://runway.example.com/videos/1754219034758.mp4",
-  "thumbnailUrl": "https://runway.example.com/thumbs/1754219034758.jpg",
+  "videoUrl": "https://example.com/videos/job_1754217099267_d3hjgjrc2.mp4",
+  "thumbnailUrl": "https://example.com/thumbnails/job_1754217099267_d3hjgjrc2.jpg",
   "duration": 60,
-  "format": "mp4",
-  "resolution": "1920x1080",
-  "provider": "runway",
-  "quality": "high",
-  "createdAt": "2025-08-03T10:30:00.000Z",
-  "script": {
-    "title": "The Story of science",
-    "scenes": [
-      {
-        "id": 1,
-        "text": "This is the beginning of our story about science...",
-        "duration": 5,
-        "imagePrompt": "Beautiful cinematic style image related to science"
-      }
-    ],
-    "totalDuration": 14,
-    "wordCount": 150
-  },
-  "audio": {
-    "audioUrl": "https://example.com/audio/1754219034758_sarah.mp3",
-    "duration": 14,
-    "voiceId": "sarah"
-  },
-  "style": "cinematic"
-}
-```
-
-**Response (Completed - Pika):**
-```json
-{
-  "jobId": "job_1754219049127_lw7i6q072",
-  "status": "completed",
-  "type": "pika_video",
-  "videoUrl": "https://pika.example.com/videos/1754219054758.mp4",
-  "resolution": "720x1280",
-  "provider": "pika",
-  "quality": "creative"
-}
-```
-
-**Response (Completed - Slideshow):**
-```json
-{
-  "jobId": "job_1754219049127_lw7i6q072",
-  "status": "completed",
-  "type": "slideshow",
-  "videoUrl": "https://slideshow.example.com/videos/1754219054758.mp4",
-  "provider": "slideshow",
-  "quality": "standard",
-  "images": [
-    {
-      "sceneId": 1,
-      "imageUrl": "https://slideshow.example.com/images/1754219054758_0.jpg",
-      "duration": 5
-    }
-  ]
-}
-```
-
-**Response (Failed):**
-```json
-{
-  "jobId": "job_1754217099267_d3hjgjrc2",
-  "status": "failed",
-  "error": "Provider API error: Rate limit exceeded",
   "createdAt": "2025-08-03T10:30:00.000Z"
 }
 ```
@@ -214,13 +125,7 @@ GET /video/status/job_1754217099267_d3hjgjrc2
 - `processing` - Video is being generated
 - `completed` - Video is ready for download
 - `failed` - Generation failed
-- `queued` - Job is waiting in queue (future feature)
-
-**Legacy Endpoint (Deprecated):**
-```
-GET /video/url?id=job_1754217099267_d3hjgjrc2
-```
-This endpoint redirects to the new format for backward compatibility.
+- `queued` - Job is waiting in queue
 
 ---
 
@@ -391,24 +296,6 @@ Returns available visual styles and their associated providers.
       "description": "Animated AI-generated content"
     },
     {
-      "id": "artistic",
-      "name": "Artistic",
-      "mode": "ai_generated",
-      "description": "Creative and experimental styles"
-    },
-    {
-      "id": "abstract",
-      "name": "Abstract",
-      "mode": "ai_generated",
-      "description": "Non-realistic, creative content"
-    },
-    {
-      "id": "documentary",
-      "name": "Documentary",
-      "mode": "ai_generated",
-      "description": "Serious, realistic documentary style"
-    },
-    {
       "id": "slideshow_modern",
       "name": "Modern Slideshow",
       "mode": "slideshow",
@@ -475,29 +362,6 @@ Returns available background music tracks.
 }
 ```
 
-## Provider-Specific Response Formats
-
-### Runway ML Videos
-- **Type:** `runway_video`
-- **Quality:** `high`
-- **Resolution:** `1920x1080`, `1080x1920`, `1080x1080`
-- **Features:** High-quality cinematic visuals, camera movements
-- **Generation Time:** 3-8 minutes
-
-### Pika Labs Videos
-- **Type:** `pika_video`
-- **Quality:** `creative`
-- **Resolution:** `720x1280`, `1280x720`, `720x720`
-- **Features:** Animated content, creative effects
-- **Generation Time:** 1-3 minutes
-
-### Slideshow Videos
-- **Type:** `slideshow`
-- **Quality:** `standard`
-- **Resolution:** `1920x1080`, `1080x1920`, `1080x1080`
-- **Features:** Static images with voice-over, cost-effective
-- **Generation Time:** 30-60 seconds
-
 ## Error Handling
 
 The API uses standard HTTP status codes and returns error details in JSON format:
@@ -520,24 +384,6 @@ Currently no rate limiting is implemented, but it's recommended to:
 - Limit concurrent video generation requests
 - Poll job status no more than once every 10 seconds
 - Cache endpoint responses for topics, voices, styles, etc.
-
-## Job Management
-
-### Job Lifecycle
-1. **Creation** - Job created with `processing` status
-2. **Processing** - Provider generates content (progress updates)
-3. **Completion** - Job finished with video URL and metadata
-4. **Cleanup** - Jobs older than 24 hours are automatically removed
-
-### Progress Tracking
-- Jobs include progress percentage (0-100)
-- Estimated completion times vary by provider
-- Real-time updates available via status polling
-
-### Error Recovery
-- Failed jobs include error details
-- Automatic retry logic for transient failures
-- Provider health monitoring and failover
 
 ## Webhooks (Planned)
 

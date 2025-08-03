@@ -8,6 +8,7 @@ Complete documentation for the AI Story API system - a powerful platform for gen
 - **[API Reference](API_REFERENCE.md)** - Complete endpoint documentation and request/response formats
 - **[Setup Guide](SETUP_GUIDE.md)** - Installation, configuration, and deployment instructions
 - **[Routing System](ROUTING_SYSTEM.md)** - Intelligent provider selection and configuration
+- **[Services Architecture](SERVICES.md)** - Service layer design and job management
 - **[CLI Guide](CLI_GUIDE.md)** - Interactive command-line tool usage
 - **[Examples](EXAMPLES.md)** - Practical use cases and integration examples
 
@@ -100,16 +101,21 @@ Practical use cases and integration patterns:
 # Health check
 GET /health
 
-# Generate video
+# Generate video (async job creation)
 POST /video/generate
 
-# Check video status
+# Check video status (new format)
+GET /video/status/{jobId}
+
+# Legacy status endpoint (deprecated)
 GET /video/url?id={jobId}
 
 # Get available options
 GET /video/topics
 GET /video/voices
 GET /video/styles
+GET /video/themes
+GET /video/background-music
 ```
 
 ### Provider Routing Examples
@@ -135,12 +141,12 @@ node create-ai-video.mjs
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   CLI Tool      │    │   API Server    │    │   Providers     │
-│                 │    │                 │    │                 │
-│ • Interactive   │───▶│ • Routing       │───▶│ • Runway ML     │
-│ • Config Gen    │    │ • Authentication│    │ • Pika Labs     │
-│ • Validation    │    │ • Job Management│    │ • Slideshow     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+│   CLI Tool      │    │   API Server    │    │   Services      │    ┌─────────────────┐
+│                 │    │                 │    │                 │    │   Providers     │
+│ • Interactive   │───▶│ • Routes        │───▶│ • configService │───▶│ • Runway ML     │
+│ • Config Gen    │    │ • Authentication│    │ • jobService    │    │ • Pika Labs     │
+│ • Validation    │    │ • Middleware    │    │ • providerSvc   │    │ • Slideshow     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ## 🔑 Environment Variables

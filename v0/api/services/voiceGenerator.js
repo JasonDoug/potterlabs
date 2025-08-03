@@ -54,12 +54,5 @@ export const generateVoiceForScript = async (script, voiceId = 'sarah') => {
   }
 };
 
-export const getAvailableVoices = () => {
-  return [
-    { id: 'sarah', name: 'Sarah', gender: 'female', accent: 'american', description: 'Professional female voice' },
-    { id: 'mike', name: 'Mike', gender: 'male', accent: 'american', description: 'Confident male voice' },
-    { id: 'emma', name: 'Emma', gender: 'female', accent: 'british', description: 'British female voice' },
-    { id: 'james', name: 'James', gender: 'male', accent: 'british', description: 'British male voice' },
-    { id: 'maria', name: 'Maria', gender: 'female', accent: 'spanish', description: 'Spanish accent female voice' }
-  ];
-};
+// Voice data moved to configService.js
+// Use getVoices() from configService instead
