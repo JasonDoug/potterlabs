@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger.js';
+import { rateLimiter, withRetry, handleAPIError, circuitBreakers, costTracker } from '../utils/apiHelpers.js';
 
 // Image generation providers configuration
 const IMAGE_PROVIDERS = {
@@ -186,28 +187,101 @@ const generateWithImageProvider = async (prompts, selection) => {
 const generateWithDALLE = async (prompts, config, styleConfig) => {
   logger.info('Generating images with DALL-E');
   
-  // Simulate DALL-E generation
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+  
   const images = [];
   
   for (const prompt of prompts) {
-    await new Promise(resolve => setTimeout(resolve, config.processingTime));
-    
-    images.push({
-      id: prompt.id,
-      url: `https://api.example.com/dalle/image_${prompt.id}_${Date.now()}.png`,
-      prompt: prompt.prompt,
-      provider: 'openai_dalle',
-      resolution: config.resolution,
-      duration: prompt.duration,
-      transition: prompt.transition,
-      effects: prompt.effects,
-      isTitle: prompt.isTitle || false,
-      metadata: {
-        model: 'dall-e-3',
-        style: styleConfig.imageStyle,
-        quality: 'hd'
-      }
-    });
+    try {
+      // Check rate limits and circuit breaker
+      await rateLimiter.checkRateLimit('openai_dalle');
+      
+      const result = await circuitBreakers.openai_dalle.execute(async () => {
+        return await withRetry(async () => {
+          logger.info(`Generating image ${prompt.id} with DALL-E`);
+          
+          const response = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: 'dall-e-3',
+              prompt: prompt.prompt,
+              n: 1,
+              size: config.resolution === '1024x1024' ? '1024x1024' : '1024x1024',
+              quality: 'hd',
+              style: styleConfig.quality === 'ultra_high' ? 'natural' : 'vivid'
+            })
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            const apiError = new Error(`DALL-E API error: ${error.error?.message || 'Unknown error'}`);
+            apiError.status = response.status;
+            throw apiError;
+          }
+          
+          const data = await response.json();
+          const imageUrl = data.data[0]?.url;
+          
+          if (!imageUrl) {
+            throw new Error('No image URL received from DALL-E');
+          }
+          
+          // Track cost
+          costTracker.trackUsage('openai_dalle', 1, { prompt: prompt.prompt.slice(0, 50) });
+          
+          return {
+            id: prompt.id,
+            url: imageUrl,
+            prompt: prompt.prompt,
+            provider: 'openai_dalle',
+            resolution: config.resolution,
+            duration: prompt.duration,
+            transition: prompt.transition,
+            effects: prompt.effects,
+            isTitle: prompt.isTitle || false,
+            metadata: {
+              model: 'dall-e-3',
+              style: styleConfig.imageStyle,
+              quality: 'hd',
+              revised_prompt: data.data[0]?.revised_prompt
+            }
+          };
+        }, {
+          retryCondition: (error) => error.status >= 500 || error.status === 429
+        });
+      });
+      
+      images.push(result);
+      logger.info(`Generated image ${prompt.id} successfully`);
+      
+    } catch (error) {
+      const errorInfo = handleAPIError(error, 'openai_dalle');
+      logger.error(`Failed to generate image ${prompt.id} with DALL-E:`, errorInfo);
+      
+      // Create fallback image entry
+      images.push({
+        id: prompt.id,
+        url: `https://via.placeholder.com/1024x1024/cccccc/666666?text=${encodeURIComponent(prompt.id)}`,
+        prompt: prompt.prompt,
+        provider: 'fallback',
+        resolution: config.resolution,
+        duration: prompt.duration,
+        transition: prompt.transition,
+        effects: prompt.effects,
+        isTitle: prompt.isTitle || false,
+        metadata: {
+          error: errorInfo.userMessage,
+          fallback: true,
+          errorType: errorInfo.type
+        }
+      });
+    }
   }
   
   return images;
@@ -216,28 +290,91 @@ const generateWithDALLE = async (prompts, config, styleConfig) => {
 const generateWithStabilityAI = async (prompts, config, styleConfig) => {
   logger.info('Generating images with Stability AI');
   
-  // Simulate Stability AI generation
+  if (!process.env.STABILITY_API_KEY) {
+    throw new Error('Stability AI API key not configured');
+  }
+  
   const images = [];
   
   for (const prompt of prompts) {
-    await new Promise(resolve => setTimeout(resolve, config.processingTime));
-    
-    images.push({
-      id: prompt.id,
-      url: `https://api.example.com/stability/image_${prompt.id}_${Date.now()}.png`,
-      prompt: prompt.prompt,
-      provider: 'stability_ai',
-      resolution: config.resolution,
-      duration: prompt.duration,
-      transition: prompt.transition,
-      effects: prompt.effects,
-      isTitle: prompt.isTitle || false,
-      metadata: {
-        model: 'stable-diffusion-xl',
-        style: styleConfig.imageStyle,
-        quality: 'ultra_high'
+    try {
+      logger.info(`Generating image ${prompt.id} with Stability AI`);
+      
+      const formData = new FormData();
+      formData.append('text_prompts[0][text]', prompt.prompt);
+      formData.append('text_prompts[0][weight]', '1');
+      formData.append('cfg_scale', '7');
+      formData.append('height', '1024');
+      formData.append('width', config.resolution === '1536x1024' ? '1536' : '1024');
+      formData.append('samples', '1');
+      formData.append('steps', '30');
+      formData.append('engine_id', 'stable-diffusion-xl-1024-v1-0');
+      
+      const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
+          'Accept': 'application/json'
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Stability AI API error: ${error.message || 'Unknown error'}`);
       }
-    });
+      
+      const data = await response.json();
+      const imageData = data.artifacts?.[0];
+      
+      if (!imageData || !imageData.base64) {
+        throw new Error('No image data received from Stability AI');
+      }
+      
+      // Convert base64 to data URL
+      const imageUrl = `data:image/png;base64,${imageData.base64}`;
+      
+      images.push({
+        id: prompt.id,
+        url: imageUrl,
+        prompt: prompt.prompt,
+        provider: 'stability_ai',
+        resolution: config.resolution,
+        duration: prompt.duration,
+        transition: prompt.transition,
+        effects: prompt.effects,
+        isTitle: prompt.isTitle || false,
+        metadata: {
+          model: 'stable-diffusion-xl-1024-v1-0',
+          style: styleConfig.imageStyle,
+          quality: 'ultra_high',
+          seed: imageData.seed,
+          finish_reason: imageData.finishReason
+        }
+      });
+      
+      logger.info(`Generated image ${prompt.id} successfully with Stability AI`);
+      
+    } catch (error) {
+      logger.error(`Failed to generate image ${prompt.id} with Stability AI:`, error);
+      
+      // Create fallback image entry
+      images.push({
+        id: prompt.id,
+        url: `https://via.placeholder.com/1536x1024/cccccc/666666?text=${encodeURIComponent(prompt.id)}`,
+        prompt: prompt.prompt,
+        provider: 'fallback',
+        resolution: config.resolution,
+        duration: prompt.duration,
+        transition: prompt.transition,
+        effects: prompt.effects,
+        isTitle: prompt.isTitle || false,
+        metadata: {
+          error: error.message,
+          fallback: true
+        }
+      });
+    }
   }
   
   return images;
