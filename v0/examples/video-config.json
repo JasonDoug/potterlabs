@@ -1,0 +1,12 @@
+{
+  "topic": "The Future of AI in Healthcare",
+  "prompt": "Create a professional video about how artificial intelligence is revolutionizing healthcare, focusing on diagnostic accuracy and patient outcomes",
+  "style": "cinematic",
+  "theme": "corporate",
+  "duration": 60,
+  "aspect_ratio": "16:9",
+  "voice_style": "professional",
+  "background_music": "corporate",
+  "content_type": "corporate",
+  "priority": "standard"
+}
