@@ -29,20 +29,31 @@ npm install          # Install dependencies
 npm run dev          # Start API server with nodemon
 npm start            # Start production API server
 
-# For Python AI logic service
+# For Python AI logic service (main orchestrator)
 cd v0/ai-logic
 pip install -r requirements.txt
-python main.py
+python main.py       # Start orchestration service on port 8000
+
+# CLI orchestration tool
+cd v0/ai-logic
+python cli.py orchestrate --interactive  # Interactive video builder
+python cli.py providers                   # Check provider status
+python cli.py health                      # Health check all services
 
 # Docker deployment
 cd v0
-docker-compose up    # Start full stack with Swagger UI
+docker-compose up    # Start full stack: AI Logic (8000) + Node API (3000) + Swagger UI (8080)
 ```
 
 ### CLI Tools
 ```bash
 cd v0/cli
 node create-ai-video.mjs    # Interactive video config generator
+npm install                 # Install CLI dependencies first
+
+# Python alternative CLI tool
+cd v0/cli
+python create_video_config.py
 ```
 
 ## Project Architecture
@@ -62,24 +73,42 @@ node create-ai-video.mjs    # Interactive video config generator
 - `biome.json` - Linter/formatter configuration
 
 ### API Backend (v0/)
-- **Framework**: Node.js Express with ES modules
-- **Architecture**: Modular monolithic API (replaced microservices)
-- **AI Services**: Python FastAPI workers for AI processing
-- **Configuration**: JSON-based pipeline routing system
+- **Architecture**: Two-tier system with Python orchestrator + Node.js provider API
+- **Main Orchestrator**: Python FastAPI service with intelligent routing (port 8000)
+- **Provider API**: Node.js Express API for provider-agnostic video generation (port 3000)
+- **CLI Interface**: Click-based terminal interface for interactive workflows
 - **API Spec**: OpenAPI 3.0 specification included
+- **Testing**: Built-in test commands with `npm test`
 
 **Key Components**:
-- `api/server.js` - Entry point
-- `api/routes/video.js` - Main API endpoints
-- `api/services/` - Business logic (script, video, voice generation)
-- `shared/video_pipeline_config.json` - Service routing configuration
-- `shared/openapi-ai-video-spec.yaml` - API specification
+- `ai-logic/main.py` - Main orchestration service with routing intelligence
+- `ai-logic/routing.py` - Provider selection algorithms and heuristics
+- `ai-logic/orchestrator.py` - Request preparation and provider configuration
+- `ai-logic/cli.py` - Interactive CLI for video orchestration
+- `api/server.js` - Provider-agnostic Node.js API entry point
+- `api/routes/generate.js` - Simple provider execution (no routing logic)
+- `api/services/` - Provider-specific generation logic
+- `shared/video_pipeline_config.json` - Provider capabilities reference
+- `shared/openapi-ai-video-spec.yaml` - Complete API specification
 
-## API Endpoints (v0/api)
+## API Endpoints
 
+### AI Logic Service (port 8000) - Main Orchestrator
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/video/generate` | Create AI video from inputs |
+| POST | `/orchestrate/video` | Main orchestration endpoint with intelligent routing |
+| POST | `/analyze/request` | Analyze request and return routing recommendations |
+| GET | `/providers/status` | Get health status of all providers |
+| GET | `/providers/capabilities` | Get capabilities of all providers |
+| POST | `/batch/orchestrate` | Batch orchestration for multiple requests |
+| GET | `/health` | Health check endpoint |
+
+### Node.js Provider API (port 3000) - Provider Execution
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/video/generate` | Execute video generation with explicit provider |
+| GET | `/video/providers/health` | Provider health check |
+| GET | `/video/providers` | Get available providers |
 | GET | `/video/topics` | Get content topic presets |
 | GET | `/video/themes` | Get caption theme presets |
 | GET | `/video/voices` | Get available TTS voices |
@@ -87,11 +116,27 @@ node create-ai-video.mjs    # Interactive video config generator
 | GET | `/video/background-music` | Get background music tracks |
 | GET | `/video/url?id=` | Poll video status and output URL |
 
+### CLI Commands
+```bash
+python cli.py orchestrate --interactive    # Interactive video builder
+python cli.py providers                    # Show provider status
+python cli.py analyze config.json         # Analyze configuration
+python cli.py batch *.json                # Batch process multiple configs
+python cli.py health                       # Health check all services
+```
+
 **Authentication**: All endpoints require `X-API-KEY` header (currently mocked for testing)
 
-**Video Modes**:
-- `ai_generated` - Fully AI-generated visuals (Runway, Pika)
-- `slideshow` - Still images + voice + captions via ffmpeg
+**New Architecture Flow**:
+1. **Client** → Python AI Logic Service (intelligent routing)
+2. **AI Logic** → Node.js Provider API (explicit provider execution)
+3. **Provider API** → External AI services (Runway, Pika, etc.)
+
+**Provider Routing** (now handled by Python AI Logic):
+- **Intelligent Analysis**: Multi-factor scoring based on style, content, duration, cost
+- **Health Checking**: Real-time provider availability monitoring  
+- **Fallback Handling**: Automatic failover with style adaptations
+- **Batch Optimization**: Efficient processing for multiple requests
 
 ## Code Quality & Standards
 
@@ -129,8 +174,10 @@ node create-ai-video.mjs    # Interactive video config generator
 - Verify responsive design across mobile/desktop breakpoints
 
 ### API Backend
+- Run `npm test` in v0/api directory for automated tests
 - Test endpoints using provided CLI tools or curl commands
-- Validate against OpenAPI specification
+- Validate against OpenAPI specification in shared/ directory
+- Use Docker Compose for full integration testing
 - Ensure proper error handling and status codes
 
 ## Deployment Notes
@@ -144,8 +191,10 @@ node create-ai-video.mjs    # Interactive video config generator
 ### API Backend
 - Docker Compose setup includes Swagger UI at localhost:8080
 - Supports both development and production environments
-- Python AI logic service runs separately from main API
+- Python AI logic service runs separately from main API (port 8000)
 - Configuration-driven provider switching for AI services
+- Uses shared volume mounts for configuration files
+- Environment variables configured via .env files
 
 ## Adding New Features
 
